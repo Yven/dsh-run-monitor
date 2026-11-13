@@ -1,8 +1,15 @@
 {
   "name": "dsh-run-monitor",
   "version": "0.2.8",
-  "private": true,
-  "description": "运行监控：在侧边栏查看执行中、待回复与已完成的会话任务，点击即可跳转到对应对话。",
+  "description": "Run monitor: running, awaiting-reply and finished sessions in the sidebar, one click to open the conversation. 运行监控：在侧边栏查看执行中、待回复与已完成的会话任务，点击即可跳转到对应对话。",
+  "keywords": ["dsh", "dsh-plugin", "dsh-bundle", "sidebar", "notifications"],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "type": "module",
   "icon": "icon.svg",
   "exports": {
@@ -10,13 +17,14 @@
     "./client": "./client.js",
     "./icon": "./icon.svg"
   },
-  "files": ["index.js", "client.js", "cordis.patch.yml", "icon.svg"],
+  "files": ["index.js", "client.js", "cordis.patch.yml", "icon.svg", "README.md"],
   "dsh": {
     "bundle": { "patch": "./cordis.patch.yml" },
     "client": {
       "platform": "web",
       "immediately": true,
       "inject": ["@deepseek-ai/dsh-client-ui-conversation"]
-    }
+    },
+    "manifestVersion": 1
   }
 }
