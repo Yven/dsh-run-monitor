@@ -32,8 +32,10 @@ window.__ModuleLoader__.load({
     /** Sidebar bubble order: most urgent state first. */
     const BADGE_STATES = ['awaiting', 'running', 'completed']
 
+    // The Host locale ids are "zh" and "en" (LOCALE_IDS in @deepseek-ai/dsh-client-locale);
+    // a "zh-CN" dictionary is never looked up while the active locale is "zh".
     const TEXT = {
-      'zh-CN': {
+      zh: {
         nav: '运行监控',
         title: '运行监控',
         close: '关闭',
@@ -533,7 +535,7 @@ window.__ModuleLoader__.load({
       updatedAt: 0,
     })
 
-    let translate = (key) => (key in TEXT['zh-CN'] ? TEXT['zh-CN'][key] : key)
+    let translate = (key) => (key in TEXT.zh ? TEXT.zh[key] : key)
     let refreshing = false
     let launcherElement = null
     let panelElement = null
@@ -631,13 +633,13 @@ window.__ModuleLoader__.load({
           const locale = scoped?.locale ?? scoped?.get?.('locale')
           if (!locale || typeof locale.register !== 'function' || typeof locale.bind !== 'function') return
           try {
-            locale.register(NS, 'zh-CN', TEXT['zh-CN'])
+            locale.register(NS, 'zh', TEXT.zh)
             locale.register(NS, 'en', TEXT.en)
             const bound = locale.bind(NS)
             if (typeof bound === 'function') {
               translate = (key) => {
                 const value = bound(key)
-                return typeof value === 'string' && value !== key ? value : (key in TEXT['zh-CN'] ? TEXT['zh-CN'][key] : key)
+                return typeof value === 'string' && value !== key ? value : (key in TEXT.zh ? TEXT.zh[key] : key)
               }
             }
             if (typeof locale.subscribe === 'function') locale.subscribe(() => store.set({}))
