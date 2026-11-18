@@ -1,9 +1,17 @@
 {
   "name": "dsh-run-monitor",
-  "version": "0.2.9",
+  "version": "0.2.13",
   "description": "Run monitor: running, awaiting-reply and finished sessions in the sidebar, one click to open the conversation. 运行监控：在侧边栏查看执行中、待回复与已完成的会话任务，点击即可跳转到对应对话。",
   "keywords": ["dsh", "dsh-plugin", "dsh-bundle", "sidebar", "notifications"],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Yven/dsh-run-monitor.git"
+  },
+  "homepage": "https://github.com/Yven/dsh-run-monitor#readme",
+  "bugs": {
+    "url": "https://github.com/Yven/dsh-run-monitor/issues"
+  },
   "publishConfig": {
     "access": "public"
   },
@@ -17,7 +25,7 @@
     "./client": "./client.js",
     "./icon": "./icon.svg"
   },
-  "files": ["index.js", "client.js", "cordis.patch.yml", "icon.svg", "README.md"],
+  "files": ["index.js", "client.js", "cordis.patch.yml", "icon.svg", "README.md", "LICENSE"],
   "dsh": {
     "bundle": { "patch": "./cordis.patch.yml" },
     "client": {

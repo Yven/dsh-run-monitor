@@ -18,6 +18,12 @@ window.__ModuleLoader__.load({
     const ENDPOINT = 'run-monitor/api/list'
     const REFRESH_MS = 4000
     const IDLE_REFRESH_MS = 20000
+    /** Fallback poll periods while the change stream is connected: it pushes, so polling is only a safety net. */
+    const LIVE_REFRESH_MS = 15000
+    const LIVE_IDLE_REFRESH_MS = 60000
+    /** Coalesces the burst of pings one agent step produces into a single refetch. */
+    const STREAM_DEBOUNCE_MS = 120
+    const STREAM_ENDPOINT = 'run-monitor/api/stream'
     const PANEL_WIDTH = 340
     const SEEN_KEY = 'dsh-run-monitor:seen-completed'
     const SEEN_LIMIT = 300
@@ -117,8 +123,8 @@ window.__ModuleLoader__.load({
       // Filled pills, but the fill is deepened so the white count keeps real
       // contrast against the bright state colours in both appearances.
       '.dsh-run-monitor-launcher__badge{flex:none;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--dsw-alias-label-secondary);color:#fff;font-size:10px;font-weight:600;line-height:16px;text-align:center;font-variant-numeric:tabular-nums}',
-      '.dsh-run-monitor-launcher__badge[data-state="awaiting"]{background:color-mix(in srgb, var(--dsw-alias-state-warn-primary) 74%, #17202e)}',
-      '.dsh-run-monitor-launcher__badge[data-state="running"]{background:color-mix(in srgb, var(--dsw-alias-state-success-primary) 64%, #17202e)}',
+      '.dsh-run-monitor-launcher__badge[data-state="awaiting"]{background:color-mix(in srgb, var(--dsw-alias-state-error-primary) 74%, #17202e)}',
+      '.dsh-run-monitor-launcher__badge[data-state="running"]{background:color-mix(in srgb, var(--dsw-alias-state-warn-primary) 74%, #17202e)}',
       '.dsh-run-monitor-launcher__badge[data-state="completed"]{background:color-mix(in srgb, var(--dsw-alias-brand-primary) 86%, #17202e)}',
       '.dsh-run-monitor-panel{position:fixed;z-index:60;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;background:var(--dsw-alias-bg-overlay);color:var(--dsw-alias-label-primary);border:1px solid var(--dsw-alias-border-l1);box-shadow:0 14px 34px rgba(0,0,0,.22);pointer-events:auto;outline:none}',
       '.dsh-run-monitor-head{display:flex;align-items:center;gap:6px;padding:9px 10px 8px 12px;border-bottom:1px solid var(--dsw-alias-border-l1)}',
@@ -139,9 +145,9 @@ window.__ModuleLoader__.load({
       '.dsh-run-monitor-section + .dsh-run-monitor-section{margin-top:4px;padding-top:8px;border-top:1px solid var(--dsw-alias-border-l1)}',
       '.dsh-run-monitor-section__head{display:flex;align-items:center;gap:6px;padding:4px 8px;font-size:11px;letter-spacing:.02em;color:var(--dsw-alias-label-secondary)}',
       '.dsh-run-monitor-section__dot{width:6px;height:6px;border-radius:50%;flex:none;background:var(--dsw-alias-state-idle-primary)}',
-      '.dsh-run-monitor-section[data-state="awaiting"] .dsh-run-monitor-section__dot{background:var(--dsw-alias-state-warn-primary)}',
+      '.dsh-run-monitor-section[data-state="awaiting"] .dsh-run-monitor-section__dot{background:var(--dsw-alias-state-error-primary)}',
       '.dsh-run-monitor-section[data-state="completed"] .dsh-run-monitor-section__dot{background:var(--dsw-alias-brand-primary)}',
-      '.dsh-run-monitor-section[data-state="running"] .dsh-run-monitor-section__dot{background:var(--dsw-alias-state-success-primary)}',
+      '.dsh-run-monitor-section[data-state="running"] .dsh-run-monitor-section__dot{background:var(--dsw-alias-state-warn-primary)}',
       '.dsh-run-monitor-section__count{font-variant-numeric:tabular-nums;opacity:.8}',
       // Rows sit under their section head, indented, so ownership is obvious.
       '.dsh-run-monitor-section ul{margin:0;padding:0 0 0 10px;list-style:none}',
@@ -158,15 +164,15 @@ window.__ModuleLoader__.load({
       '.dsh-run-monitor-error button{margin-left:6px;border:0;background:transparent;color:inherit;font:inherit;text-decoration:underline;cursor:pointer}',
       '.dsh-run-monitor-notices{position:fixed;z-index:70;display:flex;flex-direction:column-reverse;gap:10px;pointer-events:none}',
       '.dsh-run-monitor-notice{display:flex;align-items:flex-start;gap:10px;width:100%;padding:13px 12px 13px 14px;border:1px solid var(--dsw-alias-border-l2);border-left-width:3px;border-radius:12px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);box-shadow:0 18px 46px rgba(0,0,0,.34);pointer-events:auto;text-align:left;font:inherit;cursor:pointer}',
-      '.dsh-run-monitor-notice[data-state="awaiting"]{border-color:var(--dsw-alias-state-warn-primary);background:color-mix(in srgb,var(--dsw-alias-state-warn-primary) 16%,var(--dsw-alias-bg-overlay))}',
+      '.dsh-run-monitor-notice[data-state="awaiting"]{border-color:var(--dsw-alias-state-error-primary);background:color-mix(in srgb,var(--dsw-alias-state-error-primary) 16%,var(--dsw-alias-bg-overlay))}',
       '.dsh-run-monitor-notice[data-state="completed"]{border-color:var(--dsw-alias-brand-primary);background:color-mix(in srgb,var(--dsw-alias-brand-primary) 16%,var(--dsw-alias-bg-overlay))}',
       '.dsh-run-monitor-notice:hover{filter:brightness(1.05)}',
       '.dsh-run-monitor-notice__dot{flex:none;width:8px;height:8px;margin-top:6px;border-radius:50%;background:var(--dsw-alias-state-idle-primary)}',
-      '.dsh-run-monitor-notice[data-state="awaiting"] .dsh-run-monitor-notice__dot{background:var(--dsw-alias-state-warn-primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--dsw-alias-state-warn-primary) 26%,transparent)}',
+      '.dsh-run-monitor-notice[data-state="awaiting"] .dsh-run-monitor-notice__dot{background:var(--dsw-alias-state-error-primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--dsw-alias-state-error-primary) 26%,transparent)}',
       '.dsh-run-monitor-notice[data-state="completed"] .dsh-run-monitor-notice__dot{background:var(--dsw-alias-brand-primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--dsw-alias-brand-primary) 26%,transparent)}',
       '.dsh-run-monitor-notice__body{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px;padding:0;border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}',
       '.dsh-run-monitor-notice__state{font-size:11.5px;font-weight:600;letter-spacing:.01em;color:var(--dsw-alias-label-secondary)}',
-      '.dsh-run-monitor-notice[data-state="awaiting"] .dsh-run-monitor-notice__state{color:var(--dsw-alias-state-warn-primary)}',
+      '.dsh-run-monitor-notice[data-state="awaiting"] .dsh-run-monitor-notice__state{color:var(--dsw-alias-state-error-primary)}',
       '.dsh-run-monitor-notice[data-state="completed"] .dsh-run-monitor-notice__state{color:var(--dsw-alias-brand-primary)}',
       '.dsh-run-monitor-notice__title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13.5px;font-weight:600;line-height:1.4;color:var(--dsw-alias-label-primary)}',
       '.dsh-run-monitor-notice__sub{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;line-height:1.45;color:var(--dsw-alias-label-secondary)}',
@@ -489,14 +495,19 @@ window.__ModuleLoader__.load({
     }
 
     function showSystemNotification(task) {
-      const stateKey = task.state === 'awaiting' ? 'noticeAwaiting' : 'noticeCompleted'
-      const parts = [t(stateKey)]
+      // The state leads the title so a toast reads as 【已完成】<task> at a glance;
+      // the body carries the detail instead of repeating it.
+      const stateLabel = t(task.state === 'awaiting' ? 'awaiting' : 'completed')
+      const parts = []
       if (dirLabelOf(task)) parts.push(dirLabelOf(task))
       if (task.state === 'awaiting' && task.pending && task.pending.question) {
         parts.push(task.pending.question)
       }
       const tag = notificationTag(task)
-      const notification = new Notification(task.title || t('title'), { tag, body: parts.join(' · ') })
+      const notification = new Notification(`【${stateLabel}】${task.title || t('title')}`, {
+        tag,
+        body: parts.join(' · '),
+      })
       notification.onclick = () => {
         if (task.test) {
           try {
@@ -537,6 +548,11 @@ window.__ModuleLoader__.load({
 
     let translate = (key) => (key in TEXT.zh ? TEXT.zh[key] : key)
     let refreshing = false
+    let refreshQueued = false
+    let lastFetchAt = 0
+    let live = false
+    let stream = null
+    let streamTimer = null
     let launcherElement = null
     let panelElement = null
     let openTarget = null
@@ -601,11 +617,19 @@ window.__ModuleLoader__.load({
         ctx.effect(() => {
           const timer = window.setInterval(() => {
             if (store.get().open) return
-            void refresh()
-          }, IDLE_REFRESH_MS)
+            const period = live ? LIVE_IDLE_REFRESH_MS : IDLE_REFRESH_MS
+            if (Date.now() - lastFetchAt >= period) void refresh()
+          }, 2000)
           void refresh()
           return () => window.clearInterval(timer)
         }, 'dsh-run-monitor: idle refresh')
+
+        // The Host pushes "the session log moved" over SSE, so state changes land
+        // in the badge and the popover within a debounce instead of a poll period.
+        ctx.effect(() => {
+          installStream(ctx)
+          return () => stopStream()
+        }, 'dsh-run-monitor: change stream')
 
         ctx.effect(() => () => close(), 'dsh-run-monitor: close on dispose')
       },
@@ -679,6 +703,53 @@ window.__ModuleLoader__.load({
       }, 'dsh-run-monitor: interaction tracking')
     }
 
+    /** Subscribes to the Host change feed; EventSource reconnects on its own. */
+    function installStream(ctx) {
+      if (typeof EventSource !== 'function') return
+      try {
+        const source = new EventSource(routeUrl(STREAM_ENDPOINT))
+        stream = source
+        source.onopen = () => {
+          live = true
+          // A reconnect may have missed changes while the socket was down.
+          scheduleRefresh()
+        }
+        source.onerror = () => {
+          live = false
+        }
+        source.onmessage = () => {
+          live = true
+          scheduleRefresh()
+        }
+      } catch (error) {
+        console.error('[run-monitor] change stream failed:', error)
+      }
+    }
+
+    function stopStream() {
+      if (streamTimer !== null) {
+        window.clearTimeout(streamTimer)
+        streamTimer = null
+      }
+      if (stream !== null && typeof stream.close === 'function') {
+        try {
+          stream.close()
+        } catch (error) {
+          console.error('[run-monitor] change stream close failed:', error)
+        }
+      }
+      stream = null
+      live = false
+    }
+
+    function scheduleRefresh() {
+      if (streamTimer !== null) return
+      streamTimer = window.setTimeout(() => {
+        streamTimer = null
+        void refresh()
+      }, STREAM_DEBOUNCE_MS)
+    }
+
     function rectOf(element) {
       if (!element || typeof element.getBoundingClientRect !== 'function') return null
       const rect = element.getBoundingClientRect()
@@ -703,7 +774,11 @@ window.__ModuleLoader__.load({
     }
 
     function refresh() {
-      if (refreshing) return Promise.resolve()
+      if (refreshing) {
+        // A push that lands mid-request must not be dropped: refetch once, after.
+        refreshQueued = true
+        return Promise.resolve()
+      }
       refreshing = true
       if (store.get().tasks.length === 0) store.set({ loading: true })
       return fetch(url(), { headers: { accept: 'application/json' }, credentials: 'same-origin' })
@@ -713,6 +788,7 @@ window.__ModuleLoader__.load({
         })
         .then((body) => {
           if (!body || body.ok !== true || !Array.isArray(body.tasks)) throw new Error('invalid payload')
+          lastFetchAt = Date.now()
           trackStates(body.tasks)
           store.set({
             tasks: body.tasks,
@@ -726,6 +802,10 @@ window.__ModuleLoader__.load({
         })
         .then(() => {
           refreshing = false
+          if (refreshQueued) {
+            refreshQueued = false
+            void refresh()
+          }
         })
     }
 
@@ -933,8 +1013,9 @@ window.__ModuleLoader__.load({
         document.addEventListener('keydown', onKeyDown, true)
         window.addEventListener('resize', onResize)
         const timer = window.setInterval(() => {
-          void refresh()
-        }, REFRESH_MS)
+          const period = live ? LIVE_REFRESH_MS : REFRESH_MS
+          if (Date.now() - lastFetchAt >= period) void refresh()
+        }, 1000)
         if (panelElement && typeof panelElement.focus === 'function') panelElement.focus()
         return () => {
           document.removeEventListener('mousedown', onPointerDown, true)

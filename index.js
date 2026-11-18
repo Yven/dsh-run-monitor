@@ -7,6 +7,10 @@
  */
 
 const ROUTE_PREFIX = '/run-monitor/api'
+/** Coalesces bursts of session events into one "something changed" ping. */
+const BROADCAST_MS = 250
+/** Keeps idle SSE connections from being reclaimed as dead by the browser. */
+const HEARTBEAT_MS = 20000
 const TAIL_EVENTS = 400
 const HEAD_EVENTS = 400
 const EDGE_SCAN_LIMIT = 8000
@@ -17,6 +21,45 @@ const SETTLED_TYPE_PATTERN = /(outcome|answer|answered|result|resolved|decision|
 export const inject = ['webServer', 'sessions']
 
 export function apply(ctx) {
+  // Connected browsers the change feed pushes to. The feed carries no payload:
+  // it only says "the session log moved", and the client refetches the snapshot.
+  const streams = new Set()
+  let broadcastTimer = null
+
+  const broadcast = () => {
+    if (broadcastTimer !== null) return
+    broadcastTimer = setTimeout(() => {
+      broadcastTimer = null
+      for (const res of streams) writeEvent(res, 'change', {})
+    }, BROADCAST_MS)
+    if (typeof broadcastTimer.unref === 'function') broadcastTimer.unref()
+  }
+
+  ctx.effect(() => {
+    const disposers = [
+      ctx.on('session/event', broadcast),
+      ctx.on('agent/status', broadcast),
+      ctx.on('session/created', broadcast),
+      ctx.on('session/disposed', broadcast),
+      ctx.on('api-session/status', broadcast),
+      ctx.on('api-session/added', broadcast),
+      ctx.on('api-session/removed', broadcast),
+    ]
+    return () => {
+      if (broadcastTimer !== null) {
+        clearTimeout(broadcastTimer)
+        broadcastTimer = null
+      }
+      for (const dispose of disposers) {
+        try {
+          if (typeof dispose === 'function') dispose()
+        } catch {
+          /* the emitter may already be gone */
+        }
+      }
+    }
+  }, 'dsh-run-monitor: change feed')
+
   ctx.effect(
     () =>
       ctx.webServer.register({
@@ -27,6 +70,10 @@ export function apply(ctx) {
           const pathname = requestUrl.pathname
           if (req.method !== 'GET') {
             writeJson(res, 405, { ok: false, error: 'method not allowed' })
+            return
+          }
+          if (pathname === `${ROUTE_PREFIX}/stream`) {
+            openStream(res, streams)
             return
           }
           if (pathname !== `${ROUTE_PREFIX}/list`) {
@@ -42,6 +89,59 @@ export function apply(ctx) {
       }),
     'dsh-run-monitor: task list route',
   )
+}
+
+/**
+ * Server-sent events: one ping per coalesced burst of session activity, plus a
+ * heartbeat so an idle connection stays open. State still comes from /list, so
+ * the stream can drop and reconnect without any snapshot bookkeeping.
+ */
+function openStream(res, streams) {
+  if (typeof res.writeHead !== 'function' || typeof res.write !== 'function') {
+    writeJson(res, 500, { ok: false, error: 'stream unsupported' })
+    return
+  }
+  res.writeHead(200, {
+    'content-type': 'text/event-stream; charset=utf-8',
+    'cache-control': 'no-cache, no-transform',
+    connection: 'keep-alive',
+    'x-accel-buffering': 'no',
+  })
+  res.write('retry: 2000\n\n')
+  streams.add(res)
+
+  const heartbeat = setInterval(() => {
+    try {
+      res.write(': ping\n\n')
+    } catch {
+      cleanup()
+    }
+  }, HEARTBEAT_MS)
+  if (typeof heartbeat.unref === 'function') heartbeat.unref()
+
+  function cleanup() {
+    clearInterval(heartbeat)
+    streams.delete(res)
+    try {
+      res.end()
+    } catch {
+      /* already closed */
+    }
+  }
+
+  if (typeof res.on === 'function') {
+    res.on('close', cleanup)
+    res.on('error', cleanup)
+  }
+  writeEvent(res, 'hello', {})
+}
+
+function writeEvent(res, type, payload) {
+  try {
+    res.write(`data: ${JSON.stringify({ type, ...payload })}\n\n`)
+  } catch {
+    /* the close handler drops the stream */
+  }
 }
 
 function snapshot(ctx) {
