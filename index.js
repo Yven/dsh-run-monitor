@@ -148,6 +148,8 @@ function snapshot(ctx) {
   const sessions = ctx.sessions?.list?.() ?? []
   const titles = ctx.get?.('sessionTitle')
   const groups = workspaceLabels(ctx)
+  // A parent whose own turn closed can still be waiting on delegated children.
+  const waitingOnChildren = runningChildParents(sessions)
   const tasks = []
   const seen = new Set()
   for (const session of sessions) {
@@ -156,7 +158,7 @@ function snapshot(ctx) {
     if (session?.header?.origin === 'subagent') continue
     seen.add(id)
     try {
-      tasks.push(describeSession(session, titles, groups.get(id)))
+      tasks.push(describeSession(session, titles, groups.get(id), waitingOnChildren.has(id)))
     } catch (error) {
       tasks.push({
         id,
@@ -171,6 +173,30 @@ function snapshot(ctx) {
   }
   tasks.sort((left, right) => (right.updatedAt ?? 0) - (left.updatedAt ?? 0))
   return tasks.slice(0, MAX_TASKS)
+}
+
+/**
+ * Subagent sessions are never listed as tasks, but their liveness is what keeps
+ * a finished-looking parent in 执行中: the main agent ended its turn and is
+ * waiting for the children it delegated to.
+ */
+function runningChildParents(sessions) {
+  const busy = new Set()
+  for (const session of sessions) {
+    const header = session?.header ?? {}
+    if (header.origin !== 'subagent') continue
+    const parent = parentIdOf(header)
+    if (parent === '' || busy.has(parent)) continue
+    if (turnStateOf(session).open) busy.add(parent)
+  }
+  return busy
+}
+
+function parentIdOf(header) {
+  const value = header?.parentSession
+  if (typeof value === 'string') return value
+  if (value !== null && typeof value === 'object' && typeof value.id === 'string') return value.id
+  return ''
 }
 
 /**
@@ -207,7 +233,7 @@ function basename(path) {
   return parts.length > 0 ? parts[parts.length - 1] : ''
 }
 
-function describeSession(session, titles, group) {
+function describeSession(session, titles, group, childRunning) {
   const header = session?.header ?? {}
   const events = tailEvents(session)
   const last = events.length > 0 ? events[events.length - 1] : undefined
@@ -217,12 +243,13 @@ function describeSession(session, titles, group) {
 
   let state = 'idle'
   if (turn.open) state = pending === null ? 'running' : 'awaiting'
-  else if (finished !== undefined) state = 'completed'
+  else if (finished !== undefined) state = childRunning ? 'running' : 'completed'
 
   return {
     id: session.id,
     title: titleOf(session, events, titles),
     state,
+    childRunning: childRunning === true,
     group: group ?? { label: basename(typeof header.cwd === 'string' ? header.cwd : ''), path: typeof header.cwd === 'string' ? header.cwd : '' },
     turn: typeof last?.data?.turn === 'number' ? last.data.turn : 0,
     pending: pending === null ? undefined : pending,

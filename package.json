@@ -1,6 +1,6 @@
 {
   "name": "dsh-run-monitor",
-  "version": "0.2.13",
+  "version": "0.2.16",
   "description": "Run monitor: running, awaiting-reply and finished sessions in the sidebar, one click to open the conversation. 运行监控：在侧边栏查看执行中、待回复与已完成的会话任务，点击即可跳转到对应对话。",
   "keywords": ["dsh", "dsh-plugin", "dsh-bundle", "sidebar", "notifications"],
   "license": "MIT",

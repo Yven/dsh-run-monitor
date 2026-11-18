@@ -52,6 +52,7 @@ window.__ModuleLoader__.load({
         noRunning: '没有正在执行的任务',
         noAwaiting: '没有等待回复的任务',
         noCompleted: '没有未读的已完成任务',
+        childRunning: '子任务运行中',
         loading: '加载中…',
         error: '读取任务列表失败：{error}',
         retry: '重试',
@@ -85,6 +86,7 @@ window.__ModuleLoader__.load({
         noRunning: 'No task is running right now',
         noAwaiting: 'No task is waiting for a reply',
         noCompleted: 'No unread finished task',
+        childRunning: 'Child task running',
         loading: 'Loading…',
         error: 'Could not read the task list: {error}',
         retry: 'Retry',
@@ -1256,6 +1258,10 @@ window.__ModuleLoader__.load({
       const parts = []
       if (task.state === 'awaiting' && task.pending && task.pending.question) {
         parts.push(task.pending.question)
+      } else if (task.state === 'running' && task.childRunning) {
+        // The main turn closed but delegated children still run — say so instead
+        // of showing a stale "turn/end" activity line.
+        parts.push(t('childRunning'))
       } else if (task.state === 'running' && task.lastActivity) {
         parts.push(task.lastActivity)
       }
