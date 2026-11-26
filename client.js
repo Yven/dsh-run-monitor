@@ -133,7 +133,7 @@ window.__ModuleLoader__.load({
       '.dsh-run-monitor-head h2{margin:0;flex:1 1 auto;font-size:13px;font-weight:600;color:var(--dsw-alias-label-primary)}',
       '.dsh-run-monitor-icon-button{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:0;border-radius:6px;background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer}',
       '.dsh-run-monitor-icon-button:hover{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary)}',
-      '.dsh-run-monitor-settings{display:flex;align-items:center;gap:14px;padding:6px 12px;border-bottom:1px solid var(--dsw-alias-border-l1)}',
+      '.dsh-run-monitor-settings{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:7px 12px 8px;border-top:1px solid var(--dsw-alias-border-l1)}',
       '.dsh-run-monitor-setting{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--dsw-alias-label-secondary)}',
       '.dsh-run-monitor-switch{position:relative;flex:none;width:26px;height:15px;padding:0;border:1px solid var(--dsw-alias-border-l2);border-radius:999px;background:var(--dsw-alias-bg-layer-2);cursor:pointer;transition:background .12s ease,border-color .12s ease}',
       '.dsh-run-monitor-switch__knob{position:absolute;top:1px;left:1px;width:11px;height:11px;border-radius:50%;background:var(--dsw-alias-label-secondary);transition:left .12s ease,background .12s ease}',
@@ -141,26 +141,43 @@ window.__ModuleLoader__.load({
       '.dsh-run-monitor-switch.is-on .dsh-run-monitor-switch__knob{left:12px;background:var(--dsw-alias-bg-base)}',
       '.dsh-run-monitor-test{flex:none;padding:1px 6px;border:1px solid var(--dsw-alias-border-l1);border-radius:5px;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:10.5px;line-height:15px;cursor:pointer}',
       '.dsh-run-monitor-test:hover{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary)}',
-      '.dsh-run-monitor-body{flex:1 1 auto;overflow:auto;padding:4px 6px 8px}',
-      '.dsh-run-monitor-section{padding-top:6px}',
-      // Sections are separated so the three states never read as one list.
-      '.dsh-run-monitor-section + .dsh-run-monitor-section{margin-top:4px;padding-top:8px;border-top:1px solid var(--dsw-alias-border-l1)}',
-      '.dsh-run-monitor-section__head{display:flex;align-items:center;gap:6px;padding:4px 8px;font-size:11px;letter-spacing:.02em;color:var(--dsw-alias-label-secondary)}',
+      '.dsh-run-monitor-body{flex:1 1 auto;overflow:auto;padding:2px 10px 8px}',
+      // At-a-glance counters: one chip per state, doubling as that section's toggle.
+      '.dsh-run-monitor-summary{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px 2px}',
+      '.dsh-run-monitor-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 8px 3px 7px;border:1px solid var(--dsw-alias-border-l1);border-radius:999px;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:11.5px;line-height:16px;cursor:pointer}',
+      '.dsh-run-monitor-chip:hover{background:var(--dsw-alias-bg-layer-2)}',
+      '.dsh-run-monitor-chip[aria-expanded="false"]{opacity:.55}',
+      '.dsh-run-monitor-chip__dot{flex:none;width:7px;height:7px;border-radius:50%;background:var(--dsw-alias-state-idle-primary)}',
+      '.dsh-run-monitor-chip[data-state="awaiting"] .dsh-run-monitor-chip__dot{background:var(--dsw-alias-state-error-primary)}',
+      '.dsh-run-monitor-chip[data-state="running"] .dsh-run-monitor-chip__dot{background:var(--dsw-alias-state-warn-primary)}',
+      '.dsh-run-monitor-chip[data-state="completed"] .dsh-run-monitor-chip__dot{background:var(--dsw-alias-brand-primary)}',
+      '.dsh-run-monitor-chip__count{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--dsw-alias-label-primary)}',
+      // Each state is its own card: the head is the control, the rows live inside it.
+      '.dsh-run-monitor-section{margin:0 0 8px;border:1px solid var(--dsw-alias-border-l1);border-radius:10px;background:color-mix(in srgb,var(--dsw-alias-bg-layer-2) 55%,transparent);overflow:hidden}',
+      '.dsh-run-monitor-section[data-state="awaiting"]{border-color:color-mix(in srgb,var(--dsw-alias-state-error-primary) 42%,var(--dsw-alias-border-l1));box-shadow:inset 3px 0 0 var(--dsw-alias-state-error-primary)}',
+      '.dsh-run-monitor-section[data-state="running"]{box-shadow:inset 3px 0 0 color-mix(in srgb,var(--dsw-alias-state-warn-primary) 60%,transparent)}',
+      '.dsh-run-monitor-section__head{display:flex;align-items:center;gap:7px;width:100%;padding:7px 10px;border:0;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:11.5px;line-height:16px;text-align:left;cursor:pointer}',
+      '.dsh-run-monitor-section.is-open .dsh-run-monitor-section__head{border-bottom:1px solid var(--dsw-alias-border-l1)}',
+      '.dsh-run-monitor-section__head:hover{background:var(--dsw-alias-bg-layer-2)}',
+      '.dsh-run-monitor-section__label{font-weight:600;letter-spacing:.02em;color:var(--dsw-alias-label-primary)}',
+      '.dsh-run-monitor-section__chevron{display:inline-block;flex:none;font-size:9px;opacity:.6}',
+      '.dsh-run-monitor-section[data-collapsed="true"] .dsh-run-monitor-section__chevron{transform:rotate(-90deg)}',
       '.dsh-run-monitor-section__dot{width:6px;height:6px;border-radius:50%;flex:none;background:var(--dsw-alias-state-idle-primary)}',
       '.dsh-run-monitor-section[data-state="awaiting"] .dsh-run-monitor-section__dot{background:var(--dsw-alias-state-error-primary)}',
       '.dsh-run-monitor-section[data-state="completed"] .dsh-run-monitor-section__dot{background:var(--dsw-alias-brand-primary)}',
       '.dsh-run-monitor-section[data-state="running"] .dsh-run-monitor-section__dot{background:var(--dsw-alias-state-warn-primary)}',
-      '.dsh-run-monitor-section__count{font-variant-numeric:tabular-nums;opacity:.8}',
-      // Rows sit under their section head, indented, so ownership is obvious.
-      '.dsh-run-monitor-section ul{margin:0;padding:0 0 0 10px;list-style:none}',
-      '.dsh-run-monitor-row{display:flex;align-items:center;gap:6px;width:100%;padding:6px 8px;border:0;border-radius:7px;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;text-align:left;cursor:pointer;min-width:0}',
+      '.dsh-run-monitor-section__count{margin-left:auto;min-width:18px;padding:1px 6px;border-radius:999px;background:var(--dsw-alias-bg-layer-1);font-size:10.5px;font-variant-numeric:tabular-nums;text-align:center}',
+      // Rows live inside their card, so ownership is structural rather than indentation.
+      '.dsh-run-monitor-section ul{margin:0;padding:4px 6px 6px;list-style:none}',
+      '.dsh-run-monitor-divider{height:1px;margin:10px 2px 12px;background:var(--dsw-alias-border-l1)}',
+      '.dsh-run-monitor-row{display:flex;align-items:center;gap:6px;width:100%;padding:7px 9px;border:0;border-radius:7px;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;text-align:left;cursor:pointer;min-width:0}',
       '.dsh-run-monitor-row:hover{background:var(--dsw-alias-bg-layer-2)}',
       '.dsh-run-monitor-row__body{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:1px}',
       '.dsh-run-monitor-row__line{display:flex;align-items:center;gap:6px;min-width:0}',
       '.dsh-run-monitor-dir{flex:none;max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:1px 5px;border:1px solid var(--dsw-alias-border-l1);border-radius:4px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-brand-primary);font-size:10px;line-height:14px}',
       '.dsh-run-monitor-row__title{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;line-height:1.45;color:var(--dsw-alias-label-primary)}',
       '.dsh-run-monitor-row__sub{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;line-height:1.4;color:var(--dsw-alias-label-secondary)}',
-      '.dsh-run-monitor-empty{padding:4px 8px 6px 18px;font-size:11.5px;color:var(--dsw-alias-label-secondary)}',
+      '.dsh-run-monitor-empty{padding:8px 10px 10px;font-size:11.5px;color:var(--dsw-alias-label-secondary)}',
       '.dsh-run-monitor-footer{padding:6px 12px 8px;border-top:1px solid var(--dsw-alias-border-l1);font-size:11px;color:var(--dsw-alias-label-secondary);opacity:.68}',
       '.dsh-run-monitor-error{padding:6px 10px;font-size:11.5px;color:var(--dsw-alias-state-error-primary)}',
       '.dsh-run-monitor-error button{margin-left:6px;border:0;background:transparent;color:inherit;font:inherit;text-decoration:underline;cursor:pointer}',
@@ -184,8 +201,10 @@ window.__ModuleLoader__.load({
 
     const GROUPS = [
       { state: 'awaiting', labelKey: 'awaiting', emptyKey: 'noAwaiting' },
-      { state: 'completed', labelKey: 'completed', emptyKey: 'noCompleted' },
       { state: 'running', labelKey: 'running', emptyKey: 'noRunning' },
+      // Finished work sits last, behind its own divider: it is a log, not a
+      // to-do, and should never compete with the two live states.
+      { state: 'completed', labelKey: 'completed', emptyKey: 'noCompleted' },
     ]
 
     /**
@@ -969,6 +988,11 @@ window.__ModuleLoader__.load({
 
     function Monitor(props) {
       const state = useStore(store)
+      // Collapsing lives here (not in the store) so a reopened popover starts
+      // with every state expanded.
+      const [collapsed, setCollapsed] = React.useState({})
+      const toggleSection = (name) =>
+        setCollapsed((previous) => ({ ...previous, [name]: previous[name] !== true }))
       // Host-shipped per-session status projection: `completionUnread` is the
       // shell's own "finished, not opened yet" flag, so 已完成 can follow the
       // conversation the user actually looked at instead of our click history.
@@ -1097,14 +1121,7 @@ window.__ModuleLoader__.load({
         ),
       )
 
-      body.push(
-        h(
-          'div',
-          { className: 'dsh-run-monitor-settings', key: 'settings' },
-          settingRow('inApp', 'inAppHint'),
-          settingRow('system', 'systemHint'),
-        ),
-      )
+      body.push(summaryBar(counts, collapsed, toggleSection))
 
       const sections = []
       if (state.error !== '') {
@@ -1131,11 +1148,22 @@ window.__ModuleLoader__.load({
         sections.push(h('div', { className: 'dsh-run-monitor-empty', key: 'loading' }, t('loading')))
       } else {
         for (const group of GROUPS) {
-          sections.push(sectionOf(group, state.tasks, props, completedUnread))
+          if (group.state === 'completed') {
+            sections.push(h('div', { className: 'dsh-run-monitor-divider', key: 'divider', role: 'separator' }))
+          }
+          sections.push(sectionOf(group, state.tasks, props, completedUnread, collapsed, toggleSection))
         }
       }
 
       body.push(h('div', { className: 'dsh-run-monitor-body', key: 'body' }, sections))
+      body.push(
+        h(
+          'div',
+          { className: 'dsh-run-monitor-settings', key: 'settings' },
+          settingRow('inApp', 'inAppHint'),
+          settingRow('system', 'systemHint'),
+        ),
+      )
       body.push(h('footer', { className: 'dsh-run-monitor-footer', key: 'footer' }, t('hint')))
 
       return h(
@@ -1189,7 +1217,33 @@ window.__ModuleLoader__.load({
       )
     }
 
-    function sectionOf(group, tasks, props, completedUnread) {
+    // Counters first, one chip per state: the numbers are readable before any
+    // row, and each chip also folds its section away.
+    function summaryBar(counts, collapsed, onToggle) {
+      return h(
+        'div',
+        { className: 'dsh-run-monitor-summary', key: 'summary' },
+        GROUPS.map((group) =>
+          h(
+            'button',
+            {
+              type: 'button',
+              key: group.state,
+              className: 'dsh-run-monitor-chip',
+              'data-state': group.state,
+              'aria-expanded': collapsed[group.state] === true ? 'false' : 'true',
+              title: t(group.labelKey),
+              onClick: () => onToggle(group.state),
+            },
+            h('span', { className: 'dsh-run-monitor-chip__dot', 'aria-hidden': 'true' }),
+            h('span', null, t(group.labelKey)),
+            h('span', { className: 'dsh-run-monitor-chip__count' }, String(counts[group.state] || 0)),
+          ),
+        ),
+      )
+    }
+
+    function sectionOf(group, tasks, props, completedUnread, collapsed, onToggle) {
       const rows = tasks.filter((task) => task.state === group.state)
       rows.sort(
         (left, right) =>
@@ -1197,54 +1251,68 @@ window.__ModuleLoader__.load({
           (group.state === 'completed' ? left.finishedAt || left.updatedAt : left.updatedAt || 0),
       )
       const visible = group.state === 'completed' ? rows.filter((task) => completedUnread(task)) : rows
+      const folded = collapsed[group.state] === true
       return h(
         'section',
-        { className: 'dsh-run-monitor-section', 'data-state': group.state, key: group.state },
+        {
+          className: 'dsh-run-monitor-section' + (folded ? '' : ' is-open'),
+          'data-state': group.state,
+          'data-collapsed': folded ? 'true' : 'false',
+          key: group.state,
+        },
         h(
-          'div',
-          { className: 'dsh-run-monitor-section__head' },
+          'button',
+          {
+            type: 'button',
+            className: 'dsh-run-monitor-section__head',
+            'aria-expanded': folded ? 'false' : 'true',
+            onClick: () => onToggle(group.state),
+          },
           h('span', { className: 'dsh-run-monitor-section__dot', 'aria-hidden': 'true' }),
-          h('span', null, t(group.labelKey)),
+          h('span', { className: 'dsh-run-monitor-section__label' }, t(group.labelKey)),
           h('span', { className: 'dsh-run-monitor-section__count' }, String(visible.length)),
+          h('span', { className: 'dsh-run-monitor-section__chevron', 'aria-hidden': 'true' }, '▾'),
         ),
-        visible.length === 0
-          ? h('div', { className: 'dsh-run-monitor-empty' }, t(group.emptyKey))
-          : h(
-              'ul',
-              null,
-              visible.map((task) =>
-                h(
-                  'li',
-                  { key: task.id },
+        folded
+          ? null
+          : visible.length === 0
+            ? h('div', { className: 'dsh-run-monitor-empty' }, t(group.emptyKey))
+            : h(
+                'ul',
+                null,
+                visible.map((task) =>
                   h(
-                    'button',
-                    {
-                      type: 'button',
-                      className: 'dsh-run-monitor-row',
-                      title: task.title,
-                      onClick: () => {
-                        if (!props.openSession(task.id)) return
-                        if (task.state === 'completed') markSeen(task)
-                        close()
-                      },
-                    },
+                    'li',
+                    { key: task.id },
                     h(
-                      'span',
-                      { className: 'dsh-run-monitor-row__body' },
+                      'button',
+                      {
+                        type: 'button',
+                        className: 'dsh-run-monitor-row',
+                        title: task.title,
+                        onClick: () => {
+                          if (!props.openSession(task.id)) return
+                          if (task.state === 'completed') markSeen(task)
+                          close()
+                        },
+                      },
                       h(
                         'span',
-                        { className: 'dsh-run-monitor-row__line' },
-                        dirLabelOf(task) === ''
-                          ? null
-                          : h('span', { className: 'dsh-run-monitor-dir', title: task.group?.path || dirLabelOf(task) }, dirLabelOf(task)),
-                        h('span', { className: 'dsh-run-monitor-row__title' }, task.title),
+                        { className: 'dsh-run-monitor-row__body' },
+                        h(
+                          'span',
+                          { className: 'dsh-run-monitor-row__line' },
+                          dirLabelOf(task) === ''
+                            ? null
+                            : h('span', { className: 'dsh-run-monitor-dir', title: task.group?.path || dirLabelOf(task) }, dirLabelOf(task)),
+                          h('span', { className: 'dsh-run-monitor-row__title' }, task.title),
+                        ),
+                        h('span', { className: 'dsh-run-monitor-row__sub' }, subtitleOf(task)),
                       ),
-                      h('span', { className: 'dsh-run-monitor-row__sub' }, subtitleOf(task)),
                     ),
                   ),
                 ),
               ),
-            ),
       )
     }
 
